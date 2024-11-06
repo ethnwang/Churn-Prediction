@@ -138,7 +138,7 @@ def explain_prediction(probability, input_dict, surname):
     print("EXPLANATION PROMPT", prompt)
     
     raw_response = client.chat.completions.create(
-        model = "llama-3.2-3b-preview",
+        model = "gemma2-9b-it",
         messages=[{
             "role" : "user",
             "content" : prompt
@@ -163,7 +163,7 @@ def generate_email(probability, input_dict, explanation, surname):
     """
     
     raw_response = client.chat.completions.create(
-        model="llama-3.2-3b-preview",
+        model="gemma2-9b-it",
         messages=[{
             "role":"user",
             "content": prompt
