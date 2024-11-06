@@ -2,6 +2,12 @@ import streamlit as st
 import pandas as pd
 import pickle
 import numpy as np
+from dotenv import load_dotenv
+import os
+
+load_dotenv()
+
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 
 def load_model(filename):
     # "rb" read in file as binary
@@ -51,12 +57,12 @@ def make_predictions(input_df, input_dict):
         'XGBoost' : xgboost_model.predict_proba(input_df)[0][1],
         'Random Forest' : random_forest_model.predict_proba(input_df)[0][1],
         'K-Nearest Neighbors' : k_model.predict_proba(input_df)[0][1],
-        'Naive Bayes' : naive_bayes_model.predict_proba(input_df)[0][1],
-        'Decision Tree' : decision_tree_model.predict_proba(input_df)[0][1],
-        'Support Vector Machine' : svm_model.predict_proba(input_df)[0][1],
-        'Vating Classifier' : voting_classifier_model.predict_proba(input_df)[0][1],
-        'XGBoost Smote' : xgboost_SMOTE_model.predict_proba(input_df)[0][1],
-        'XGBoost Feature Engineered' : xgboost_featureEngineered_model.predict_proba(input_df)[0][1]
+        # 'Naive Bayes' : naive_bayes_model.predict_proba(input_df)[0][1], (has a probability of 0)
+        # 'Decision Tree' : decision_tree_model.predict_proba(input_df)[0][1], (has a probability of 0)
+        # 'XGBoost Feature Engineered' : xgboost_featureEngineered_model.predict_proba(input_df)[0][1], (has other features we haven't defined yet)
+        # 'XGBoost Smote' : xgboost_SMOTE_model.predict_proba(input_df)[0][1] (has other features we haven't defined yet)
+        # 'Support Vector Machine' : svm_model.predict_proba(input_df)[0][1] (doesn't have a predict_proba function)
+        # 'Vating Classifier' : voting_classifier_model.predict_proba(input_df)[0][1] (doesn't have a predict_proba function)
     }
     
     avg_probability = np.mean(list(probabilities.values()))
@@ -162,4 +168,6 @@ if selected_customer_option:
         )
     
     # adding machine learning model and the predicitions the model is giving us
+    input_df, input_dict = prepare_input(credit_score, location, gender, age, tenure, balance, num_products, has_credit_card, is_active_member, estimated_salary)
+    make_predictions(input_df, input_dict)
     
