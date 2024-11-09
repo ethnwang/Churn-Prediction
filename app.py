@@ -128,17 +128,21 @@ def explain_prediction(probability, input_dict, surname):
     - If the customer has over a 40% risk of churning, generate a 3 sentence explanation of why they are at risk of churning.
     - If the customer has less than 40% risk of churning, generate a 3 sentence explanation of why they might not be at risk of churning.
     - Your explanation should be based on the customer's information, the sumary statistics, of churned and non-churned customers, and the feature of imporatnces provided.
+    - If the customer has over a 40% risk of churning don't provide reasoning for if they had less than 40% and vice versa.
+    - Use the customer's information when explaining things
     
     
     Don't mention the probability of churning, or the machine learning model, or say anything like "Based on the machine learning model's prediction and top 10 most
     important features", or mention any of the customer's raw data, just explain the prediction.
+    
+    Don't mention any of the intructions given in the prompt.
     
     """
     
     print("EXPLANATION PROMPT", prompt)
     
     raw_response = client.chat.completions.create(
-        model = "gemma2-9b-it",
+        model = "llama-3.2-11b-text-preview",
         messages=[{
             "role" : "user",
             "content" : prompt
@@ -151,7 +155,7 @@ def generate_email(probability, input_dict, explanation, surname):
     
     You noticed a customer named {surname} has a {round(probability * 100,1 )}% probability of churning. 
     
-    Here is the customer's informationL {input_dict}
+    Here is the customer's information: {input_dict}
     
     Here is some explanation as to why the customer might be at risk of churning: {explanation}
     
@@ -163,7 +167,7 @@ def generate_email(probability, input_dict, explanation, surname):
     """
     
     raw_response = client.chat.completions.create(
-        model="gemma2-9b-it",
+        model="llama-3.2-11b-text-preview",
         messages=[{
             "role":"user",
             "content": prompt
