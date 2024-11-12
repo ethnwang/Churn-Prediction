@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import utils as ut
 import os
-from imblearn.over_sampling import SMOTE
 
 load_dotenv()
 

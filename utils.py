@@ -1,7 +1,5 @@
 import plotly.graph_objects as go
 
-import plotly.graph_objects as go
-
 def create_gauge_chart(probability):
     # Determine color based on churn probability
     if probability < 0.3:
