@@ -29,9 +29,8 @@ def create_gauge_chart(probability):
                 'borderwidth': 2,
                 'bordercolor': "white",
                 'steps': [
-                    {'range': [0, 30], 'color': 'rgba(0, 255, 0, 0.3)'},
-                    {'range': [30, 60], 'color': 'rgba(255, 255, 0, 0.3)'},
-                    {'range': [60, 100], 'color': 'rgba(255, 0, 0, 0.3)'}
+                    {'range': [0, 40], 'color': 'rgba(255, 255, 0, 0.3)'},
+                    {'range': [40, 100], 'color': 'rgba(255, 0, 0, 0.3)'}
                 ],
                 'threshold': {
                     'line': {'color': "white", 'width': 4},
@@ -57,13 +56,14 @@ def create_gauge_chart(probability):
 def create_model_probability_chart(probabilities):
     models = list(probabilities.keys())
     probs = list(probabilities.values())
+    probs = [p * 100 for p in probs]
 
     fig = go.Figure(data=[
         go.Bar(
             x=models,
             y=probs,
             orientation="v",
-            text=[f"{p*100:.2f}%" for p in probs],
+            text=[f"{p:.2f}%" for p in probs],
             textposition="auto"
         )
     ])

@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 import utils as ut
 import os
+from imblearn.over_sampling import SMOTE
 
 load_dotenv()
 
@@ -40,7 +41,7 @@ xgboost_featureEngineered_model = load_model("CSV_PKL_Files/xgboost_model.pkl")
 
 def prepare_input(credit_score, location, gender, age, tenure, balance, num_products, has_credit_card, is_active_member, estimated_salary):
     input_dict = {
-        'Credit Score': credit_score,
+        'CreditScore': credit_score,
         'Age' : age,
         'Tenure' : tenure,
         'Balance' : balance,
@@ -52,10 +53,34 @@ def prepare_input(credit_score, location, gender, age, tenure, balance, num_prod
         'Geography_Germany' : 1 if location == "Germanuy" else 0,
         'Geography_Spain' : 1 if location == "Spain" else 0,
         'Gender_Male' : 1 if gender == "Male" else 0,
-        'Gender_Female' : 1 if location == "Female" else 0
+        'Gender_Female' : 1 if location == "Female" else 0,
     }
     
+    # SMOTE_input_dict = {
+    #     'CreditScore': credit_score,
+    #     'Age' : age,
+    #     'Tenure' : tenure,
+    #     'Balance' : balance,
+    #     'NumOfProducts' : num_products,
+    #     'HasCrCard' : has_credit_card,
+    #     'IsActiveMember' : is_active_member,
+    #     'EstimatedSalary' : estimated_salary,
+    #     'Geography_France' : 1 if location == "France" else 0,
+    #     'Geography_Germany' : 1 if location == "Germanuy" else 0,
+    #     'Geography_Spain' : 1 if location == "Spain" else 0,
+    #     'Gender_Male' : 1 if gender == "Male" else 0,
+    #     'Gender_Female' : 1 if location == "Female" else 0,
+    #     'AgeGroup_Elderly' : 1 if age >= 60 else 0,
+    #     'AgeGroup_Senior' : 1 if age >= 45 and age < 60  else 0,
+    #     'AgeGroup_MiddleAge' : 1 if age >= 30 and age < 45  else 0,
+    #     'AgeGroup_Young' : 1 if age >= 0 and age < 30 else 0,
+    #     'CLV' : (balance * estimated_salary) / 100000,
+    #     'TenureAgeRatio' : tenure / age,
+    #     'SMOTE': SMOTE(random_state=42)
+    # }
+    
     input_df = pd.DataFrame([input_dict])
+    # input_SMOTE_df = pd.DataFrame([SMOTE_input_dict])
     return input_df, input_dict
 
 def make_predictions(input_df, input_dict):
@@ -65,8 +90,8 @@ def make_predictions(input_df, input_dict):
         'K-Nearest Neighbors' : k_model.predict_proba(input_df)[0][1],
         # 'Naive Bayes' : naive_bayes_model.predict_proba(input_df)[0][1], (has a probability of 0)
         # 'Decision Tree' : decision_tree_model.predict_proba(input_df)[0][1], (has a probability of 0)
-        # 'XGBoost Feature Engineered' : xgboost_featureEngineered_model.predict_proba(input_df)[0][1], (has other features we haven't defined yet)
-        # 'XGBoost Smote' : xgboost_SMOTE_model.predict_proba(input_df)[0][1] (has other features we haven't defined yet)
+        # 'XGBoost Feature Engineered' : xgboost_featureEngineered_model.predict_proba(input_df)[0][1], # (has other features we haven't defined yet)
+        # 'XGBoost Smote' : xgboost_SMOTE_model.predict_proba(input_SMOTE_df)[0][1] # (has other features we haven't defined yet)
         # 'Support Vector Machine' : svm_model.predict_proba(input_df)[0][1] (doesn't have a predict_proba function)
         # 'Vating Classifier' : voting_classifier_model.predict_proba(input_df)[0][1] (doesn't have a predict_proba function)
     }
@@ -125,10 +150,9 @@ def explain_prediction(probability, input_dict, surname):
     
     Here are the summary statistics for non-churned customers: {df[df['Exited'] == 0].describe()}
     
-    - If the customer has over a 40% risk of churning, generate a 3 sentence explanation of why they are at risk of churning.
-    - If the customer has less than 40% risk of churning, generate a 3 sentence explanation of why they might not be at risk of churning.
+    - If {round(probability * 100, 1)} is less than 40%, generate a 3 sentence explanation of why the customer might not be at risk of churning and use their information in the explanation and in the explanation and start the explanation with "They might not be at risk of churning because" and give the explanation.
+    - If {round(probability * 100, 1)} is over 40%, generate a 3 sentence explanation of why the customer is at risk of churning and use their information in the explanation and start the explanation with "They are at risk of churning because" and give the explanation.
     - Your explanation should be based on the customer's information, the sumary statistics, of churned and non-churned customers, and the feature of imporatnces provided.
-    - If the customer has over a 40% risk of churning don't provide reasoning for if they had less than 40% and vice versa.
     - Use the customer's information when explaining things
     
     
@@ -137,6 +161,7 @@ def explain_prediction(probability, input_dict, surname):
     
     Don't mention any of the intructions given in the prompt.
     
+    Only write an explanation for EITHER over a 40% risk of churning OR under a 40% risk of churning depending on {round(probability * 100, 1)}% 
     """
     
     print("EXPLANATION PROMPT", prompt)
@@ -202,6 +227,8 @@ if selected_customer_option:
     print("Selected Customer Information:\n", selected_customer)
     
     col1, col2 = st.columns(2)
+    
+    # print(col1, col2)
     
     with col1:
         # UI component from Streamlit library that is a number input
@@ -272,6 +299,17 @@ if selected_customer_option:
             min_value=0.0,
             value=float(selected_customer['EstimatedSalary'])
         )
+        
+        # age_group = st.radio("Age Group", 
+        #                   ["Young", "Middle Age", "Senior", "Elderly"],
+        #                   index=(
+        #                       0 if selected_customer['AgeGroup'] == 'Young' else
+        #                       1 if selected_customer['AgeGroup'] == 'Middle Age' else
+        #                       2 if selected_customer['AgeGroup'] == 'Senior' else
+        #                       3 if selected_customer['AgeGroup'] == 'Elderly' else
+        #                       0  # Default to index 0 if none match
+        #                 )
+        # )
     
     # adding machine learning model and the predicitions the model is giving us
     input_df, input_dict = prepare_input(credit_score, location, gender, age, tenure, balance, num_products, has_credit_card, is_active_member, estimated_salary)
